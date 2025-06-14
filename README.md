@@ -50,6 +50,11 @@ Dify 官方 Web 界面的批量执行功能存在以下问题：
 - Chart.js (数据可视化)
 - 本地化静态资源 (离线可用)
 
+**容器化部署**
+- Docker + Docker Compose (一键部署)
+- 阿里云镜像源 (国内加速)
+- 数据持久化 (挂载卷)
+
 ---
 
 ## 🚀 快速开始
@@ -60,6 +65,22 @@ Dify 官方 Web 界面的批量执行功能存在以下问题：
 - macOS / Linux / Windows
 
 ### 安装部署
+
+#### 🐳 Docker 部署（推荐）
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/WW-AI-Lab/dify-workflow-batch.git
+cd dify-workflow-batch
+
+# 2. 使用 Docker Compose 启动
+docker-compose up -d
+
+# 3. 查看服务状态
+docker-compose ps
+```
+
+#### 🐍 本地部署
 
 ```bash
 # 1. 克隆项目

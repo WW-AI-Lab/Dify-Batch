@@ -1,0 +1,68 @@
+# Git相关
+.git
+.gitignore
+
+# Python相关
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+.coverage
+.venv
+venv/
+env/
+
+# 开发工具
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志和数据文件
+logs/
+*.log
+data/
+uploads/
+results/
+temp/
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 配置文件
+.env
+
+# 文档和资产（保留README和assets）
+docs/
+!README.md
+!assets/
+
+# 测试文件
+test_*
+*_test.py
+tests/
+
+# 构建文件
+build/
+dist/
+*.egg-info/
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Docker相关
+Dockerfile*
+docker-compose*
+.dockerignore 
