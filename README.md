@@ -177,8 +177,19 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dify_batch
 - `docs/` 目录包含完整的开发过程文档
 - `.cursor/rules` 包含 Cursor IDE 的上下文规则
 - 每个关键决策都有对应的设计文档
-
 ---
+
+## 效果截图
+
+![image-20250614224456212](./assets/image-20250614224456212.png)
+
+![image-20250614224544016](./assets/image-20250614224544016.png)
+
+![image-20250614224618551](./assets/image-20250614224618551.png)
+
+![image-20250614224710297](./assets/image-20250614224710297.png)
+
+![image-20250614224800790](./assets/image-20250614224800790.png)
 
 ## ⚠️ 免责声明
 
