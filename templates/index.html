@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - Dify Workflow批量执行系统{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white rounded p-5 mb-4">
+            <h1 class="display-4">
+                <i class="fas fa-rocket me-3"></i>
+                欢迎使用 Dify Workflow 批量执行系统
+            </h1>
+            <p class="lead">
+                高效、便捷的工作流批量处理平台，支持Excel数据导入、并发执行和结果导出
+            </p>
+            <hr class="my-4">
+            <p>开始您的批量处理之旅，提升工作效率</p>
+            <a class="btn btn-light btn-lg" href="/workflows" role="button">
+                <i class="fas fa-play me-2"></i>
+                立即开始
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-project-diagram fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">工作流管理</h5>
+                <p class="card-text">
+                    查看可用Dify工作流，获取参数信息，下载Excel模板
+                </p>
+                <a href="/workflows" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    查看工作流
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-3x text-success mb-3"></i>
+                <h5 class="card-title">批量执行</h5>
+                <p class="card-text">
+                    上传Excel文件，配置执行参数，启动批量处理任务
+                </p>
+                <a href="/batch" class="btn btn-success">
+                    <i class="fas fa-upload me-1"></i>
+                    批量执行
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-list fa-3x text-info mb-3"></i>
+                <h5 class="card-title">任务管理</h5>
+                <p class="card-text">
+                    监控任务执行状态，查看执行日志，下载处理结果
+                </p>
+                <a href="/tasks" class="btn btn-info">
+                    <i class="fas fa-eye me-1"></i>
+                    查看任务
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    系统特性
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                支持Excel模板自动生成
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                高并发工作流执行
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                实时执行进度监控
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                完整的错误处理机制
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                结果数据Excel导出
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                详细的执行日志记录
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
