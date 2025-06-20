@@ -497,11 +497,15 @@ class BatchProcessor:
                     execution_time = time.time() - start_time
                     logger.info(f"✅ 工作流执行成功")
                     logger.info(f"   执行时间: {execution_time:.2f}秒")
+                    logger.info(f"   工作流运行ID: {response.workflow_run_id}")
+                    logger.info(f"   任务ID: {response.task_id}")
                     logger.info(f"   响应数据: {json.dumps(response.data, ensure_ascii=False, indent=2)}")
                     
                     await self._update_execution_status(
                         execution_id,
                         ExecutionStatus.SUCCESS,
+                        workflow_run_id=response.workflow_run_id,  # 关键：保存工作流运行ID
+                        task_id=response.task_id,                  # 关键：保存任务ID
                         outputs=response.data,
                         execution_time_seconds=execution_time,
                         completed_at=datetime.utcnow()
@@ -596,8 +600,56 @@ class BatchProcessor:
             
             await db.commit()
             
+            # 验证执行完整性
+            integrity_check = await self._validate_execution_integrity(batch_task_id)
+            if not integrity_check:
+                logger.warning(f"执行完整性验证失败: {batch_task_id}")
+            
             # 生成结果文件
             await self._generate_result_file(batch_task_id)
+    
+    async def _validate_execution_integrity(self, batch_task_id: str) -> bool:
+        """验证执行完整性 - 确保所有成功的执行都有正确的工作流运行ID"""
+        try:
+            async with get_db_session() as db:
+                # 检查是否所有成功执行都有正确的工作流运行ID
+                result = await db.execute(
+                    select(TaskExecution)
+                    .where(
+                        TaskExecution.batch_task_id == batch_task_id,
+                        TaskExecution.status == ExecutionStatus.SUCCESS,
+                        TaskExecution.workflow_run_id.is_(None)
+                    )
+                )
+                invalid_executions = result.scalars().all()
+                
+                if invalid_executions:
+                    logger.error(f"🚨 发现 {len(invalid_executions)} 个执行记录缺少工作流运行ID")
+                    for execution in invalid_executions:
+                        logger.error(f"   - 执行ID: {execution.id}, 行索引: {execution.row_index}")
+                    return False
+                
+                # 检查工作流运行ID是否重复（可能的数据错乱迹象）
+                result = await db.execute(
+                    select(TaskExecution.workflow_run_id)
+                    .where(
+                        TaskExecution.batch_task_id == batch_task_id,
+                        TaskExecution.status == ExecutionStatus.SUCCESS,
+                        TaskExecution.workflow_run_id.is_not(None)
+                    )
+                )
+                workflow_run_ids = [row[0] for row in result.all()]
+                
+                if len(workflow_run_ids) != len(set(workflow_run_ids)):
+                    logger.error(f"🚨 发现重复的工作流运行ID，可能存在数据错乱")
+                    return False
+                
+                logger.info(f"✅ 执行完整性验证通过: {batch_task_id}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"执行完整性验证失败: {batch_task_id}, 错误: {e}")
+            return False
     
     async def _handle_batch_task_error(self, batch_task_id: str, error_message: str):
         """处理批量任务错误"""
@@ -626,17 +678,37 @@ class BatchProcessor:
                 if not batch_task or not batch_task.file_path:
                     return
                 
-                # 获取所有执行结果
+                # 获取所有执行结果 - 严格按行索引排序确保数据匹配
                 result = await db.execute(
                     select(TaskExecution)
                     .where(TaskExecution.batch_task_id == batch_task_id)
-                    .order_by(TaskExecution.row_index)
+                    .order_by(TaskExecution.row_index)  # 确保按原始数据行顺序排序
                 )
                 executions = result.scalars().all()
                 
-                # 构建结果数据
+                logger.info(f"📋 生成结果文件，共 {len(executions)} 条执行记录")
+                
+                # 验证执行记录的完整性和顺序
+                expected_indices = set(range(len(executions)))
+                actual_indices = {execution.row_index for execution in executions}
+                
+                if expected_indices != actual_indices:
+                    logger.error(f"🚨 执行记录索引不完整！")
+                    logger.error(f"   期望索引: {sorted(expected_indices)}")
+                    logger.error(f"   实际索引: {sorted(actual_indices)}")
+                    missing_indices = expected_indices - actual_indices
+                    extra_indices = actual_indices - expected_indices
+                    if missing_indices:
+                        logger.error(f"   缺失索引: {sorted(missing_indices)}")
+                    if extra_indices:
+                        logger.error(f"   额外索引: {sorted(extra_indices)}")
+                
+                # 构建结果数据 - 确保与输入数据一一对应
                 results = []
                 for execution in executions:
+                    # 记录详细的匹配信息用于调试
+                    logger.debug(f"处理执行记录: 行索引={execution.row_index}, 执行ID={execution.id}, "
+                               f"工作流运行ID={execution.workflow_run_id}, 状态={execution.status}")
                     if execution.status == ExecutionStatus.SUCCESS:
                         # 提取实际的输出内容
                         output_text = "执行成功"

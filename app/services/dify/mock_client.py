@@ -99,7 +99,7 @@ class MockDifyClient:
         # 创建响应对象 - 模拟真实Dify API的响应格式
         response = WorkflowExecutionResponse(
             workflow_run_id=response_data["id"],
-            task_id=response_data["id"],
+            task_id=response_data["task_id"],  # 使用独立的任务ID
             data=response_data
         )
         
@@ -112,25 +112,49 @@ class MockDifyClient:
         query = inputs.get("query", "默认查询")
         context = inputs.get("context", "")
         
-        # 生成模拟输出
+        # 获取输入中的唯一标识符（用于验证匹配关系）
+        unique_marker = inputs.get("unique_marker", "")
+        user_id = inputs.get("id", "unknown")
+        user_name = inputs.get("name", "unknown")
+        
+        # 生成唯一的工作流运行ID和任务ID（包含时间戳和随机数）
+        timestamp = int(time.time() * 1000)  # 毫秒时间戳
+        random_part = random.randint(10000, 99999)
+        workflow_run_id = f"run-{timestamp}-{random_part}"
+        task_id = f"task-{timestamp}-{random_part}"
+        
+        # 确保响应包含输入的唯一标识符，用于验证匹配关系
         mock_outputs = {
-            "text": f"针对查询「{query}」的回答",
+            "text": f"针对用户{user_name}(ID:{user_id})的查询「{query}」的回答",
             "summary": f"基于上下文「{context}」的总结" if context else "无上下文总结",
-            "confidence": random.uniform(0.7, 0.95)
+            "confidence": random.uniform(0.7, 0.95),
+            "processed_user_id": user_id,  # 包含用户ID用于验证
+            "processed_unique_marker": unique_marker  # 包含唯一标识符用于验证
         }
         
-        # 随机选择输出格式
+        # 随机选择输出格式，但始终包含验证信息
         output_formats = [
-            {"text": mock_outputs["text"]},
-            {"result": mock_outputs["text"], "confidence": mock_outputs["confidence"]},
-            {"answer": mock_outputs["text"], "summary": mock_outputs["summary"]},
+            {
+                "text": mock_outputs["text"],
+                "input_marker": unique_marker  # 总是包含输入标识符
+            },
+            {
+                "result": mock_outputs["text"], 
+                "confidence": mock_outputs["confidence"],
+                "input_marker": unique_marker
+            },
+            {
+                "answer": mock_outputs["text"], 
+                "summary": mock_outputs["summary"],
+                "input_marker": unique_marker
+            },
             mock_outputs  # 完整输出
         ]
         
         selected_output = random.choice(output_formats)
         
         return {
-            "id": f"run-{random.randint(1000, 9999)}",
+            "id": workflow_run_id,  # 使用唯一的工作流运行ID
             "workflow_id": "test-workflow-001",
             "status": "succeeded",
             "outputs": selected_output,
@@ -139,7 +163,8 @@ class MockDifyClient:
             "total_tokens": random.randint(100, 500),
             "total_steps": random.randint(2, 6),
             "created_at": int(time.time()),
-            "finished_at": int(time.time()) + random.randint(1, 5)
+            "finished_at": int(time.time()) + random.randint(1, 5),
+            "task_id": task_id  # 独立的任务ID
         }
     
     async def get_workflow_parameters(self) -> Dict[str, Any]:

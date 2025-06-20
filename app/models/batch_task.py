@@ -167,7 +167,8 @@ class TaskExecution(Base):
     
     # 关联信息
     batch_task_id = Column(String(50), ForeignKey("batch_tasks.id"), nullable=False, comment="批量任务ID")
-    workflow_run_id = Column(String(50), comment="Dify工作流运行ID")
+    workflow_run_id = Column(String(100), comment="Dify工作流运行ID")
+    task_id = Column(String(100), comment="Dify任务ID")
     
     # 执行信息
     row_index = Column(Integer, nullable=False, comment="Excel行索引")
@@ -214,6 +215,7 @@ class TaskExecution(Base):
             "id": self.id,
             "batch_task_id": self.batch_task_id,
             "workflow_run_id": self.workflow_run_id,
+            "task_id": self.task_id,
             "row_index": self.row_index,
             "status": self.status,
             "inputs": self.inputs,

@@ -126,19 +126,20 @@ dmypy.json
 # 日志文件
 logs/
 *.log
+test_*.log
+*_test.log
 
-# 数据文件
+# 数据文件和运行时目录
 data/
 uploads/
 results/
 temp/
+docker-data/
 
 # 数据库文件
 *.db
 *.sqlite
 *.sqlite3
-data/
-uploads/
 
 # 配置文件（保留示例文件）
 .env
@@ -171,10 +172,23 @@ Desktop.ini
 .cache/
 cache/
 
-# 测试文件
+# 测试文件和测试脚本
 test_*.py
 *_test.py
 tests/temp/
+check_*.py
+create_test_*.py
+migrate_*.py
+
+# 测试配置和数据文件
+test_*.json
+test_*.xlsx
+test_*.xls
+*_test.json
+*_test.xlsx
+*_test.xls
+mock_*.json
+test_workflow_config.json
 
 # 部署文件
 docker-compose.override.yml
