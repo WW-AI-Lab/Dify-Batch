@@ -617,8 +617,11 @@ class TaskManager:
                             }
                             
                             # 重新启动批量任务
-                            from app.services.batch.batch_processor import batch_processor
+                            from app.services.batch.batch_processor import BatchProcessor
                             from app.services.batch.progress_tracker import progress_tracker
+                            
+                            # 创建批量处理器实例
+                            batch_processor = BatchProcessor()
                             
                             success = await batch_processor.start_batch_task(
                                 batch_task_id,

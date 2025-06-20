@@ -232,8 +232,11 @@ class TaskRecoveryService:
                 raise Exception(f"无法获取工作流配置: {task.workflow_id}")
             
             # 导入批量处理器（避免循环导入）
-            from app.services.batch.batch_processor import batch_processor
+            from app.services.batch.batch_processor import BatchProcessor
             from app.services.batch.progress_tracker import progress_tracker
+            
+            # 创建批量处理器实例
+            batch_processor = BatchProcessor()
             
             # 启动批量任务恢复
             success = await batch_processor.start_batch_task(
