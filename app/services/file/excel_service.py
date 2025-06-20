@@ -108,13 +108,36 @@ class ExcelService:
                 if is_description_row:
                     df = df.iloc[1:]
                 
-                # 如果还有数据且长度大于1，再跳过一行示例行
-                if len(df) > 1:
-                    # 检查是否有明显的示例数据行
-                    if len(df) > 0:
-                        second_row = df.iloc[0]
-                        # 可以在这里添加更多示例行检测逻辑
-                        pass
+                # 🔧 修复：增强示例行检测逻辑
+                if len(df) > 0:
+                    # 检查第一行是否为示例行
+                    first_row = df.iloc[0]
+                    is_example_row = False
+                    
+                    for col_idx, col_name in enumerate(df.columns):
+                        if col_idx < len(first_row):
+                            cell_value = str(first_row.iloc[col_idx]).strip()
+                            clean_col_name = col_name.strip()
+                            if clean_col_name.endswith(' *'):
+                                clean_col_name = clean_col_name[:-2].strip()
+                            
+                            # 检测常见的示例数据
+                            example_values = [
+                                'iPhone', 'iphone', 'IPHONE',  # 常见示例手机
+                                '示例', '例子', 'example', 'sample',  # 示例标识词
+                                '示例参数', '示例数据', '示例内容',  # 示例参数
+                                'test', 'Test', 'TEST',  # 测试数据
+                                '测试', '测试数据', '测试内容'  # 中文测试数据
+                            ]
+                            
+                            if cell_value in example_values:
+                                is_example_row = True
+                                break
+                    
+                    # 跳过示例行
+                    if is_example_row:
+                        df = df.iloc[1:]
+                        logger.info(f"跳过检测到的示例行，剩余数据行数: {len(df)}")
             
             # 转换为字典列表
             data_rows = []
@@ -245,7 +268,7 @@ class ExcelService:
         
         Args:
             original_file_path: 原始文件路径
-            results: 执行结果列表
+            results: 执行结果列表（按row_index顺序排列）
             output_path: 输出文件路径
             
         Returns:
@@ -256,29 +279,120 @@ class ExcelService:
             
             # 读取原始文件
             df = pd.read_excel(original_file_path, sheet_name="批量数据", header=0)
+            original_df = df.copy()  # 保留原始数据框用于调试
             
-            # 跳过描述行和示例行
-            if len(df) > 2:
-                df = df.iloc[2:]
+            # 🔧 关键修复：使用与解析时完全相同的行跳过逻辑
+            # 这里必须与 parse_excel_file 方法中的逻辑保持一致
             
-            # 过滤空行
+            # 检查第一行是否为描述行（与解析逻辑保持一致）
+            if len(df) > 0:
+                first_row = df.iloc[0]
+                is_description_row = False
+                
+                for col_idx, col_name in enumerate(df.columns):
+                    if col_idx < len(first_row):
+                        cell_value = str(first_row.iloc[col_idx]).strip()
+                        clean_col_name = col_name.strip()
+                        if clean_col_name.endswith(' *'):
+                            clean_col_name = clean_col_name[:-2].strip()
+                        
+                        # 如果单元格值就是列名本身，或者是常见的描述词，则认为是描述行
+                        if (cell_value == clean_col_name or 
+                            cell_value in ['搜索词', '参数', '输入', '数据', '内容', '值', '示例']):
+                            is_description_row = True
+                            break
+                
+                # 跳过描述行（与解析逻辑一致）
+                if is_description_row:
+                    df = df.iloc[1:]
+                
+                # 🔧 修复：应用与解析时相同的示例行检测逻辑
+                if len(df) > 0:
+                    # 检查第一行是否为示例行
+                    first_row = df.iloc[0]
+                    is_example_row = False
+                    
+                    for col_idx, col_name in enumerate(df.columns):
+                        if col_idx < len(first_row):
+                            cell_value = str(first_row.iloc[col_idx]).strip()
+                            clean_col_name = col_name.strip()
+                            if clean_col_name.endswith(' *'):
+                                clean_col_name = clean_col_name[:-2].strip()
+                            
+                            # 检测常见的示例数据（与解析逻辑完全一致）
+                            example_values = [
+                                'iPhone', 'iphone', 'IPHONE',  # 常见示例手机
+                                '示例', '例子', 'example', 'sample',  # 示例标识词
+                                '示例参数', '示例数据', '示例内容',  # 示例参数
+                                'test', 'Test', 'TEST',  # 测试数据
+                                '测试', '测试数据', '测试内容'  # 中文测试数据
+                            ]
+                            
+                            if cell_value in example_values:
+                                is_example_row = True
+                                break
+                    
+                    # 跳过示例行
+                    if is_example_row:
+                        df = df.iloc[1:]
+                        logger.info(f"结果生成时跳过检测到的示例行，剩余数据行数: {len(df)}")
+            
+            # 过滤空行（与解析逻辑一致）
             df = df.dropna(how='all')
+            
+            # 🔧 重要：现在df中的行索引与执行时的row_index应该是对应的
+            logger.info(f"📊 Excel文件处理结果：")
+            logger.info(f"   原始行数: {len(original_df)}")
+            logger.info(f"   处理后行数: {len(df)}")
+            logger.info(f"   结果数据行数: {len(results)}")
+            
+            # 验证数据行数是否匹配
+            if len(results) != len(df):
+                logger.warning(f"⚠️ 数据行数不匹配！结果数据{len(results)}行，Excel数据{len(df)}行")
+                # 但不要抛出异常，继续处理
             
             # 添加结果列
             if "执行结果" not in df.columns:
                 df["执行结果"] = ""
             
-            # 填充结果数据
+            # 🔧 关键修复：直接按索引填充结果，不再使用任何偏移
+            # results列表已经按row_index排序，直接对应填充即可
             for idx, result in enumerate(results):
                 if idx < len(df):
+                    logger.debug(f"填充结果: 行索引{idx}, 结果: {result}")
                     if result.get("success"):
                         df.iloc[idx, df.columns.get_loc("执行结果")] = result.get("output", "执行成功")
                     else:
                         df.iloc[idx, df.columns.get_loc("执行结果")] = f"执行失败: {result.get('error', '未知错误')}"
+                else:
+                    logger.warning(f"⚠️ 结果索引{idx}超出Excel数据范围({len(df)})")
+            
+            # 🔧 重要：保存时需要恢复完整的Excel结构
+            # 我们需要将结果合并回原始的Excel结构中
+            
+            # 创建最终的输出数据框
+            final_df = original_df.copy()
+            
+            # 添加结果列到原始数据框
+            if "执行结果" not in final_df.columns:
+                final_df["执行结果"] = ""
+            
+            # 计算原始数据框中实际数据行的起始位置
+            data_start_row = len(original_df) - len(df)
+            logger.info(f"📍 数据起始行位置: {data_start_row}")
+            
+            # 将结果填充到正确的位置
+            for idx, result in enumerate(results):
+                target_row = data_start_row + idx
+                if target_row < len(final_df):
+                    if result.get("success"):
+                        final_df.iloc[target_row, final_df.columns.get_loc("执行结果")] = result.get("output", "执行成功")
+                    else:
+                        final_df.iloc[target_row, final_df.columns.get_loc("执行结果")] = f"执行失败: {result.get('error', '未知错误')}"
             
             # 保存结果文件
             with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name="执行结果", index=False)
+                final_df.to_excel(writer, sheet_name="执行结果", index=False)
                 
                 # 设置样式
                 workbook = writer.book
@@ -302,9 +416,9 @@ class ExcelService:
                     adjusted_width = min(max_length + 2, 50)
                     worksheet.column_dimensions[column_letter].width = adjusted_width
             
-            logger.info(f"结果文件生成完成: {output_path}")
+            logger.info(f"✅ 结果文件生成完成: {output_path}")
             return output_path
             
         except Exception as e:
-            logger.error(f"生成结果文件失败: {str(e)}")
+            logger.error(f"❌ 生成结果文件失败: {str(e)}")
             raise FileProcessingException(f"生成结果文件失败: {str(e)}") 
