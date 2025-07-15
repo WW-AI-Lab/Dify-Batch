@@ -87,14 +87,13 @@
                                         </td>
                                         <td>
                                             <div class="progress" style="height: 20px;">
-                                                <div class="progress-bar" 
-                                                     :style="`width: ${task.progress_percentage || 0}%`"
-                                                     :class="getProgressBarClass(task.status)">
-                                                    <span x-text="`${Math.round(task.progress_percentage || 0)}%`"></span>
+                                                <div class="progress-bar bg-success" 
+                                                     :style="`width: ${getCompletionPercentage(task)}%`">
+                                                    <span x-text="`${getCompletionPercentage(task)}%`"></span>
                                                 </div>
                                             </div>
                                             <small class="text-muted">
-                                                <span x-text="task.total_items || 0"></span> 项
+                                                <span x-text="task.completed_items || 0"></span> / <span x-text="task.total_items || 0"></span> 项
                                             </small>
                                         </td>
                                         <td>
@@ -455,10 +454,9 @@
                     <div class="mb-4">
                         <h6>执行进度</h6>
                         <div class="progress" style="height: 25px;">
-                            <div class="progress-bar" 
-                                 :style="`width: ${selectedTask?.progress_percentage || 0}%`"
-                                 :class="getProgressBarClass(selectedTask?.status)">
-                                <span x-text="`${Math.round(selectedTask?.progress_percentage || 0)}%`"></span>
+                            <div class="progress-bar bg-success" 
+                                 :style="`width: ${getCompletionPercentage(selectedTask)}%`">
+                                <span x-text="`${getCompletionPercentage(selectedTask)}%`"></span>
                             </div>
                         </div>
                     </div>
@@ -1104,6 +1102,15 @@ function batchExecutionApp() {
             return workflow ? workflow.name : '未知工作流';
         },
         
+        getCompletionPercentage(task) {
+            if (!task.total_items || task.total_items === 0) {
+                return 0;
+            }
+            const completed = task.completed_items || 0;
+            const total = task.total_items || 0;
+            return Math.round((completed / total) * 100);
+        },
+        
         getStatusText(status) {
             const statusMap = {
                 'pending': '等待执行',
@@ -1128,15 +1135,7 @@ function batchExecutionApp() {
             return classMap[status] || 'bg-secondary';
         },
         
-        getProgressBarClass(status) {
-            const classMap = {
-                'running': 'progress-bar-striped progress-bar-animated',
-                'completed': 'bg-success',
-                'failed': 'bg-danger',
-                'cancelled': 'bg-warning'
-            };
-            return classMap[status] || '';
-        },
+
         
         formatDateTime(dateStr) {
             if (!dateStr) return '-';
